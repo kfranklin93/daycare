@@ -1,12 +1,13 @@
 import React, { useState, useCallback } from "react";
-import { View, Text, ScrollView, Alert } from "react-native";
+import { View, Text, ScrollView, Alert, StyleSheet } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, Input, Button, Avatar, Chip } from "../../components/ui";
+import { Card, Input, Button } from "../../components/ui";
 import FormSection from "../../components/ui/FormSection";
 import FormProgress, { FormStep } from "../../components/ui/FormProgress";
 import { profileSchema, type ProfileFormData } from "../../lib/validations";
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Chip from "../../components/Chip";
+import Avatar from "../../components/Avatar";
 
 const SKILLS = [
   "Infant Care",
@@ -32,11 +33,9 @@ type StepId = 'personal' | 'experience' | 'skills' | 'review';
 
 export default function ProfileScreen() {
   const [loading, setLoading] = useState(false);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [selectedCerts, setSelectedCerts] = useState<string[]>([]);
   const [currentStepId, setCurrentStepId] = useState<StepId>('personal');
 
-  const { control, handleSubmit, watch, formState: { errors, dirtyFields } } = useForm<ProfileFormData>({
+  const { control, handleSubmit, watch, formState: { errors, dirtyFields }, setValue, getValues } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: "",
@@ -51,6 +50,8 @@ export default function ProfileScreen() {
   });
 
   const formValues = watch();
+  const selectedSkills = watch("skills", []);
+  const selectedCerts = watch("certifications", []);
 
   const steps: FormStep[] = [
     {
@@ -58,8 +59,8 @@ export default function ProfileScreen() {
       title: 'Personal',
       icon: 'account',
       isCompleted: Boolean(
-        dirtyFields.fullName && 
-        dirtyFields.email && 
+        dirtyFields.fullName &&
+        dirtyFields.email &&
         dirtyFields.phone &&
         !errors.fullName &&
         !errors.email &&
@@ -70,10 +71,7 @@ export default function ProfileScreen() {
       id: 'experience',
       title: 'Experience',
       icon: 'briefcase',
-      isCompleted: Boolean(
-        dirtyFields.experienceYears &&
-        !errors.experienceYears
-      )
+      isCompleted: Boolean(dirtyFields.experienceYears && !errors.experienceYears)
     },
     {
       id: 'skills',
@@ -92,26 +90,12 @@ export default function ProfileScreen() {
   const onSubmit = async (data: ProfileFormData) => {
     try {
       setLoading(true);
-      const formData = {
-        ...data,
-        skills: selectedSkills,
-        certifications: selectedCerts,
-      };
-      console.log("Profile data:", formData);
+      console.log("Profile data:", data);
       await new Promise(resolve => setTimeout(resolve, 1000));
-      Alert.alert(
-        "Success",
-        "Your profile has been updated successfully!",
-        [{ text: "OK" }]
-      );
-      // Mark the review step as completed after successful submission
+      Alert.alert("Success", "Your profile has been updated successfully!");
       steps[3].isCompleted = true;
     } catch (error) {
-      Alert.alert(
-        "Error",
-        "Failed to update profile. Please try again.",
-        [{ text: "OK" }]
-      );
+      Alert.alert("Error", "Failed to update profile. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -131,31 +115,27 @@ export default function ProfileScreen() {
     }
   }, [currentStepId, steps]);
 
-  const toggleSkill = (skill: string) => {
-    setSelectedSkills(prev =>
-      prev.includes(skill)
-        ? prev.filter(s => s !== skill)
-        : [...prev, skill]
-    );
-  };
+  const toggleSkill = useCallback((skill: string) => {
+    const currentSkills = getValues("skills") || [];
+    const newSkills = currentSkills.includes(skill)
+      ? currentSkills.filter(s => s !== skill)
+      : [...currentSkills, skill];
+    setValue("skills", newSkills, { shouldDirty: true, shouldValidate: true });
+  }, [getValues, setValue]);
 
-  const toggleCert = (cert: string) => {
-    setSelectedCerts(prev =>
-      prev.includes(cert)
-        ? prev.filter(c => c !== cert)
-        : [...prev, cert]
-    );
-  };
+  const toggleCert = useCallback((cert: string) => {
+    const currentCerts = getValues("certifications") || [];
+    const newCerts = currentCerts.includes(cert)
+      ? currentCerts.filter(c => c !== cert)
+      : [...currentCerts, cert];
+    setValue("certifications", newCerts, { shouldDirty: true, shouldValidate: true });
+  }, [getValues, setValue]);
 
-  const renderStepContent = () => {
+  const renderStepContent = (): React.ReactNode => {
     switch (currentStepId) {
       case 'personal':
         return (
-          <FormSection 
-            title="Personal Information" 
-            icon="account"
-            helper="Your basic information visible to employers"
-          >
+          <FormSection title="Personal Information" icon="account" helper="Your basic information visible to employers">
             <Controller
               control={control}
               name="fullName"
@@ -171,7 +151,6 @@ export default function ProfileScreen() {
                 />
               )}
             />
-
             <Controller
               control={control}
               name="email"
@@ -188,7 +167,6 @@ export default function ProfileScreen() {
                 />
               )}
             />
-
             <Controller
               control={control}
               name="phone"
@@ -209,11 +187,7 @@ export default function ProfileScreen() {
 
       case 'experience':
         return (
-          <FormSection 
-            title="Experience" 
-            icon="briefcase"
-            helper="Tell us about your teaching experience"
-          >
+          <FormSection title="Experience" icon="briefcase" helper="Tell us about your teaching experience">
             <Controller
               control={control}
               name="experienceYears"
@@ -229,7 +203,6 @@ export default function ProfileScreen() {
                 />
               )}
             />
-
             <Controller
               control={control}
               name="bio"
@@ -251,14 +224,10 @@ export default function ProfileScreen() {
 
       case 'skills':
         return (
-          <FormSection 
-            title="Skills & Certifications" 
-            icon="star"
-            helper="Select all that apply to you"
-          >
-            <Text className="text-gray-700 font-medium mb-2">Skills</Text>
-            <View className="flex-row flex-wrap mb-4">
-              {SKILLS.map((skill) => (
+          <FormSection title="Skills & Certifications" icon="star" helper="Select all that apply to you">
+            <Text style={styles.sectionLabel}>Skills</Text>
+            <View style={styles.chipContainer}>
+              {SKILLS.map(skill => (
                 <Chip
                   key={skill}
                   label={skill}
@@ -267,10 +236,9 @@ export default function ProfileScreen() {
                 />
               ))}
             </View>
-
-            <Text className="text-gray-700 font-medium mb-2">Certifications</Text>
-            <View className="flex-row flex-wrap">
-              {CERTIFICATIONS.map((cert) => (
+            <Text style={styles.sectionLabel}>Certifications</Text>
+            <View style={styles.chipContainer}>
+              {CERTIFICATIONS.map(cert => (
                 <Chip
                   key={cert}
                   label={cert}
@@ -284,91 +252,98 @@ export default function ProfileScreen() {
 
       case 'review':
         return (
-          <FormSection 
-            title="Review Your Profile" 
-            icon="eye"
-            helper="Review your information before submitting"
-          >
-            <View className="bg-gray-50 rounded-lg p-4 mb-4">
-              <Text className="font-semibold mb-2">Personal Information</Text>
+          <FormSection title="Review Your Profile" icon="eye" helper="Review your information before submitting">
+            <View style={styles.reviewCard}>
+              <Text style={styles.reviewHeader}>Personal Information</Text>
               <Text>Name: {formValues.fullName}</Text>
               <Text>Email: {formValues.email}</Text>
               <Text>Phone: {formValues.phone}</Text>
             </View>
-
-            <View className="bg-gray-50 rounded-lg p-4 mb-4">
-              <Text className="font-semibold mb-2">Experience</Text>
+            <View style={styles.reviewCard}>
+              <Text style={styles.reviewHeader}>Experience</Text>
               <Text>Years of Experience: {formValues.experienceYears}</Text>
               <Text>Bio: {formValues.bio || 'Not provided'}</Text>
             </View>
-
-            <View className="bg-gray-50 rounded-lg p-4">
-              <Text className="font-semibold mb-2">Skills & Certifications</Text>
+            <View style={styles.reviewCard}>
+              <Text style={styles.reviewHeader}>Skills & Certifications</Text>
               <Text>Skills: {selectedSkills.join(', ') || 'None selected'}</Text>
               <Text>Certifications: {selectedCerts.join(', ') || 'None selected'}</Text>
             </View>
           </FormSection>
         );
+
+      default:
+        return null;
     }
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-50">
-      <View className="p-4">
+    <ScrollView style={styles.container}>
+      <View style={styles.contentWrapper}>
         <Card padding="lg">
-          {/* Profile Header */}
-          <View className="items-center mb-8">
+          <View style={styles.header}>
             <Avatar size="lg" initials="JS" />
-            <Text className="text-xl font-semibold mt-2">Complete Your Profile</Text>
-            <Text className="text-gray-600 text-sm mt-1">
-              {currentStepId === 'review' 
+            <Text style={styles.headerTitle}>Complete Your Profile</Text>
+            <Text style={styles.headerSubtitle}>
+              {currentStepId === 'review'
                 ? 'Review and submit your profile'
                 : 'Fill out your profile information'}
             </Text>
           </View>
 
-          {/* Progress Tracker */}
           <FormProgress
             steps={steps}
             currentStepId={currentStepId}
             onStepPress={(stepId) => setCurrentStepId(stepId as StepId)}
           />
 
-          {/* Step Content */}
           {renderStepContent()}
 
-          {/* Navigation Buttons */}
-          <View className="flex-row mt-6 gap-2">
+          <View style={styles.navigation}>
             {currentStepId !== 'personal' && (
-              <Button
-                title="Back"
-                onPress={handleBack}
-                variant="outline"
-                icon="arrow-left"
-                className="flex-1"
-              />
+              <View style={{ flex: 1, marginRight: 4 }}>
+                <Button
+                  title="Back"
+                  onPress={handleBack}
+                  variant="outline"
+                  icon="arrow-left"
+                />
+              </View>
             )}
-            
-            {currentStepId === 'review' ? (
-              <Button
-                title="Submit Profile"
-                onPress={handleSubmit(onSubmit)}
-                loading={loading}
-                icon="check"
-                className="flex-1"
-              />
-            ) : (
-              <Button
-                title="Continue"
-                onPress={handleNext}
-                icon="arrow-right"
-                iconPosition="right"
-                className="flex-1"
-              />
-            )}
+
+            <View style={{ flex: 1, marginLeft: currentStepId !== 'personal' ? 4 : 0 }}>
+              {currentStepId === 'review' ? (
+                <Button
+                  title="Submit Profile"
+                  onPress={handleSubmit(onSubmit)}
+                  loading={loading}
+                  icon="check"
+                />
+              ) : (
+                <Button
+                  title="Continue"
+                  onPress={handleNext}
+                  icon="arrow-right"
+                  iconPosition="right"
+                />
+              )}
+            </View>
           </View>
         </Card>
       </View>
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  contentWrapper: { padding: 16 },
+  header: { alignItems: 'center', marginBottom: 32 },
+  headerTitle: { fontSize: 20, fontWeight: '600', marginTop: 8 },
+  headerSubtitle: { color: '#6B7280', fontSize: 14, marginTop: 4 },
+  sectionLabel: { color: '#374151', fontWeight: '500', marginBottom: 8 },
+  chipContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 },
+  reviewCard: { backgroundColor: '#F3F4F6', borderRadius: 8, padding: 16, marginBottom: 16 },
+  reviewHeader: { fontWeight: '600', marginBottom: 4 },
+  navigation: { flexDirection: 'row', marginTop: 24 },
+});
