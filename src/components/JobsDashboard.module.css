@@ -1,0 +1,136 @@
+.container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #6c757d;
+  margin-bottom: 24px;
+}
+
+.noJobs {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.jobsList {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.jobCard {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.jobCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.jobTitle {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.jobMeta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.jobLocation {
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.jobDate {
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.jobDescription {
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #495057;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.jobSalary {
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: #495057;
+}
+
+.jobFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.applicantsCount {
+  display: flex;
+  align-items: center;
+  background-color: #e9ecef;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 14px;
+}
+
+.statusIndicator {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.active {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.closed {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.paused {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.draft {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+@media (max-width: 768px) {
+  .jobsList {
+    grid-template-columns: 1fr;
+  }
+}
