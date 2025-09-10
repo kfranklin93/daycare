@@ -16,6 +16,7 @@ A comprehensive React web application for managing daycare operations, children,
 - React 18
 - TypeScript
 - React Router for navigation
+- Redux
 - Styled Components for styling
 - React Query for data fetching
 - React Hook Form for form handling
